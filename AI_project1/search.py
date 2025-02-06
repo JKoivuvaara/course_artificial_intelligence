@@ -19,6 +19,7 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -72,6 +73,58 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+
+def graphSearch(problem, frontier) -> []:
+    """
+    used by dfs, bfs, ucs, A*
+    @param problem:
+    @param frontier: queue, needs to have functions push(), pop()
+    """
+
+    path = []
+    moves_into_branch = [0]  # last item in this list = steps since branching point
+
+
+    reached = dict()
+    frontier.push( (problem.getStartState(), None, None) )  # (node, direction, cost)
+
+    while not frontier.isEmpty():
+        node, direction, cost = frontier.pop()
+
+        if direction:
+            path.append(direction)
+            moves_into_branch[-1] += 1
+
+        if problem.isGoalState(node):
+            return path
+        reached[node] = node
+
+        branches = 0
+        for child in expand(problem, node, reached):
+            branches += 1
+            frontier.push(child)
+
+
+        if branches >= 2:  # create new branching point
+            moves_into_branch.append(0)
+
+        if branches == 0:  # backtrack if dead-end
+            backtrack = moves_into_branch[-1]
+            print(f"backtracking {backtrack} steps")
+            new_path = path[:-backtrack]
+            path = path[:-moves_into_branch[-1]]
+            moves_into_branch = moves_into_branch[:-1]
+
+    return path  # no path to goal found, maybe return [] here?
+
+
+def expand(problem, node, reached):
+    for successor in problem.getSuccessors(node):
+        next_node = successor[0]
+        if next_node not in reached:
+            yield successor
+
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -87,12 +140,28 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    
+    # print("Start:", problem.getStartState(), "\n")
+    # print("Is the start a goal?", problem.isGoalState(problem.getStartState()), "\n")
+    # print("Start's successors:", problem.getSuccessors(problem.getStartState()), "\n")
+    # getSuccessors(state) -> (newState, action, cost)
+
+    # print(type(problem))
+    # print(type(problem.getStartState()))
+
+    # print("starting DFS")
+
+    frontier = util.Stack()  # Last in first out queue
+    return graphSearch(problem, frontier)
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    frontier = util.Queue()  # First in first out queue
+    return graphSearch(problem, frontier)
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""

@@ -99,13 +99,12 @@ def expand(problem, node, path_cost, reached):
     for successor in problem.getSuccessors(node):
         next_node, direction, action_cost = successor
         if next_node not in reached:
-            path_cost = path_cost + action_cost  # calculate total path cost
-            yield next_node, direction, path_cost, node
+            yield next_node, direction, path_cost + action_cost, node
 
 
 def graphSearch(problem, frontier) -> []:
     """
-    used by dfs, bfs, ucs, A*
+    used by dfs, bfs
     @param problem:
     @param frontier: queue, needs to have functions push(), pop()
     """
@@ -163,10 +162,43 @@ def breadthFirstSearch(problem):
     return path
 
 
+def weightedGraphSearch(problem, frontier) -> []:
+    """
+    used by ucs
+    @param problem:
+    @param frontier: queue, needs to have functions push(), pop(), update()
+    """
+    reached = dict()
+    actions_taken = []
+    frontier.push((problem.getStartState(), None, 0, None), 0)  # (node, direction, cost, parent_node), priority
+
+    while not frontier.isEmpty():
+        action = frontier.pop()
+        node, direction, path_cost, parent = action
+
+        if reached.get(node):
+            continue
+        reached[node] = node
+
+        if direction:  # skip first iteration
+            actions_taken.append(action)
+
+        if problem.isGoalState(node):
+            return get_path(problem, actions_taken)
+
+        for child in expand(problem, node, path_cost, reached):
+            frontier.update(child, child[2])
+
+    return []  # no path to goal found
+
+
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.PriorityQueue()  # First in first out queue
+    path = weightedGraphSearch(problem, frontier)
+    return path
+
 
 def nullHeuristic(state, problem=None):
     """

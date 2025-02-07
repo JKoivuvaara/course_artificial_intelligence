@@ -74,55 +74,63 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 
+def get_path(problem, actions_taken: []) -> []:
+    path = []
+    i = len(actions_taken) - 1
+    while i >= 0:  # loop backwards over the list, beginning from the last action
+        action = actions_taken[i]  # (node, direction, cost, parent)
+        direction = action[1]
+        parent = action[3]
+        path.append(direction)
+
+        # check previous nodes until we find the parent's action
+        i = i - 1
+        while i >= 0 and parent != actions_taken[i][0]:
+            i = i - 1
+
+    path.reverse()
+    return path
+
+
+def expand(problem, node, path_cost, reached):
+    """
+    returns: Generator[child_node, direction, cost, parent_node]
+    """
+    for successor in problem.getSuccessors(node):
+        next_node, direction, action_cost = successor
+        if next_node not in reached:
+            path_cost = path_cost + action_cost  # calculate total path cost
+            yield next_node, direction, path_cost, node
+
+
 def graphSearch(problem, frontier) -> []:
     """
     used by dfs, bfs, ucs, A*
     @param problem:
     @param frontier: queue, needs to have functions push(), pop()
     """
-
-    path = []
-    moves_into_branch = [0]  # last item in this list = steps since branching point
-
-
     reached = dict()
-    frontier.push( (problem.getStartState(), None, None) )  # (node, direction, cost)
+    actions_taken = []
+    frontier.push( (problem.getStartState(), None, 0, None) )  # (node, direction, cost, parent_node)
 
     while not frontier.isEmpty():
-        node, direction, cost = frontier.pop()
+        action = frontier.pop()
+        node, direction, path_cost, parent = action
 
-        if direction:
-            path.append(direction)
-            moves_into_branch[-1] += 1
-
-        if problem.isGoalState(node):
-            return path
+        if reached.get(node):
+            continue
         reached[node] = node
 
-        branches = 0
-        for child in expand(problem, node, reached):
-            branches += 1
+        if direction:  # skip first iteration
+            actions_taken.append(action)
+
+        if problem.isGoalState(node):
+            return get_path(problem, actions_taken)
+
+        for child in expand(problem, node, path_cost, reached):
             frontier.push(child)
 
-
-        if branches >= 2:  # create new branching point
-            moves_into_branch.append(0)
-
-        if branches == 0:  # backtrack if dead-end
-            backtrack = moves_into_branch[-1]
-            print(f"backtracking {backtrack} steps")
-            new_path = path[:-backtrack]
-            path = path[:-moves_into_branch[-1]]
-            moves_into_branch = moves_into_branch[:-1]
-
-    return path  # no path to goal found, maybe return [] here?
-
-
-def expand(problem, node, reached):
-    for successor in problem.getSuccessors(node):
-        next_node = successor[0]
-        if next_node not in reached:
-            yield successor
+    return []  # no path to goal found
 
 
 def depthFirstSearch(problem):
@@ -140,19 +148,10 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    
-    # print("Start:", problem.getStartState(), "\n")
-    # print("Is the start a goal?", problem.isGoalState(problem.getStartState()), "\n")
-    # print("Start's successors:", problem.getSuccessors(problem.getStartState()), "\n")
-    # getSuccessors(state) -> (newState, action, cost)
-
-    # print(type(problem))
-    # print(type(problem.getStartState()))
-
-    # print("starting DFS")
 
     frontier = util.Stack()  # Last in first out queue
-    return graphSearch(problem, frontier)
+    path = graphSearch(problem, frontier)
+    return path
 
 
 def breadthFirstSearch(problem):
@@ -160,7 +159,8 @@ def breadthFirstSearch(problem):
     "*** YOUR CODE HERE ***"
 
     frontier = util.Queue()  # First in first out queue
-    return graphSearch(problem, frontier)
+    path = graphSearch(problem, frontier)
+    return path
 
 
 def uniformCostSearch(problem):

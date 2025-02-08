@@ -162,7 +162,15 @@ def breadthFirstSearch(problem):
     return path
 
 
-def weightedGraphSearch(problem, frontier) -> []:
+def nullHeuristic(state, problem=None):
+    """
+    A heuristic function estimates the cost from the current state to the nearest
+    goal in the provided SearchProblem.  This heuristic is trivial.
+    """
+    return 0
+
+
+def weightedGraphSearch(problem, frontier, heuristic=nullHeuristic) -> []:
     """
     used by ucs
     @param problem:
@@ -187,30 +195,25 @@ def weightedGraphSearch(problem, frontier) -> []:
             return get_path(problem, actions_taken)
 
         for child in expand(problem, node, path_cost, reached):
-            frontier.update(child, child[2])
+            frontier.update(child, child[2] + heuristic(child[0], problem))
 
     return []  # no path to goal found
 
 
 def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
+    """Search the node of the smallest total cost first."""
     "*** YOUR CODE HERE ***"
     frontier = util.PriorityQueue()  # First in first out queue
     path = weightedGraphSearch(problem, frontier)
     return path
 
 
-def nullHeuristic(state, problem=None):
-    """
-    A heuristic function estimates the cost from the current state to the nearest
-    goal in the provided SearchProblem.  This heuristic is trivial.
-    """
-    return 0
-
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.PriorityQueue()  # First in first out queue
+    path = weightedGraphSearch(problem, frontier, heuristic)
+    return path
 
 
 # Abbreviations

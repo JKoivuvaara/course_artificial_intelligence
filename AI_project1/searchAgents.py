@@ -318,8 +318,9 @@ class CornersProblem(search.SearchProblem):
         # self.maxConnections = len(self.startingLocations) * (len(self.startingLocations) - 1)
 
         # maxConnections for a non-directed graph
-        # for i in range(len(self.startingLocations)):
-        #     self.maxConnections += i
+        self.maxConnections = 0
+        for i in range(len(self.startingLocations)):
+            self.maxConnections += i
 
     def getStartState(self):
         """
@@ -327,16 +328,14 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        return self.startingLocations
+        return self.startingPosition
 
-    def isGoalState(self, state: int):
+    def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
-        @return: connections found == maxConnections
-        @param state: connections found
         """
         "*** YOUR CODE HERE ***"
-        return state == self.maxConnections
+        return state in self.corners
 
     def getSuccessors(self, state):
         """
@@ -401,10 +400,23 @@ def cornersHeuristic(state, problem):
 
     "*** YOUR CODE HERE ***"
 
-    """deprioritize paths through the middle, prioritize edges"""
+    """
+    It's very unlikely that the optimal path goes through the middle multiple times in a rectangular maze,    
+    so deprioritizing the centre is probably a good strategy.
+    
+    On average, the furthest points from the middle are the corners, so a good way of deprioritizing
+    search in the middle area is by calculating the distance to the closest corner and having that as a heuristic.
+    """
 
+    lowest_distance = 99999
+    s_x, s_y = state
+    for corner in corners:
+        distance_to_corner = ((s_x - corner[0]) ** 2 + (s_y - corner[1]) ** 2) ** 0.5
+        if distance_to_corner < lowest_distance:
+            lowest_distance = distance_to_corner
 
-    return 0 # Default to trivial solution
+    return lowest_distance
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"

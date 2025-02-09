@@ -236,7 +236,7 @@ def graphSearch_cornersProblem(problem, frontier, start_location, goal_locations
             actions_taken.append((node, direction, path_cost, parent))
 
         """when a goal_location is found, append the connection"""
-        if node in goal_locations:
+        if node in goal_locations:  # for some reason problem.isGoalState(state) doesn't work
             path_to_goal = getPath(problem, actions_taken)
             connections_found.append((start_location, node, path_cost, path_to_goal))
 
@@ -375,8 +375,6 @@ def findShortestPath(start_connections, connections):
     print(f"The shortest path is: {path}")
     return path
 
-    util.raiseNotDefined()
-    return []
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
@@ -389,7 +387,8 @@ def breadthFirstSearch(problem):
         start_connections = []
 
         """start bfs from every start location separately"""
-        all_locations = problem.getStartState()
+        all_locations = problem.startingLocations  # if this is not allowed, you could also form the list of other
+                                                   # starting locations during the first bfs search
         goal_locations = list.copy(all_locations)
         for i, start_location in enumerate(all_locations):
             goal_locations.remove(start_location)  # if A->B is found, dont look for B->A
@@ -451,6 +450,65 @@ def weightedGraphSearch(problem, frontier, heuristic=nullHeuristic) -> []:
     return []  # no path to goal found
 
 
+def weightedGraphSearch_cornersProblem(problem, frontier, start_location, goal_locations, heuristic=nullHeuristic):
+    """
+    for solving cornersProblem, actually almost identical with graphSearch...
+    TODO: replace original weightedGraphSearch-function with this function
+
+    This function allows for multiple starting locations for the search.
+    @param problem: e.g. cornersProblem
+    @param frontier: queue for bfs, stack for dfs
+    @param start_location: start search here
+    @param goal_locations: list of locations being searched
+    @param heuristic:
+    """
+    explored_nodes = set()
+    # set of explored nodes {(a,b), (c,d)... }
+    # value: (neighbour, direction_to_neighbour)
+    actions_taken = []
+
+    # return this
+    connections_found = []  # [(start, goal, path_to_goal), ...]
+
+    actions_taken = []  # [(this_node, how_we_got_here, cost, parent), ...]
+
+    # push starting locations to queue
+    frontier.push( (start_location, None, 0, None), 0)  # (this_node, how_we_got_here, path_cost, parent), priority
+
+    """ Begin main loop """
+    while not frontier.isEmpty():
+        """explore next node in queue"""
+        node, direction, path_cost, parent = frontier.pop()  # (this_node, how_we_got_here, cost, parent)
+
+        """if the node has already been explored, continue from the beginning"""
+        if node in explored_nodes:
+            continue
+
+        """if not, add the current node to the set of explored nodes"""
+        explored_nodes = explored_nodes | {node}
+        # print(f"set = {explored_nodes}")
+
+        """keep track of actions taken"""
+        if direction:  # skip first round
+            actions_taken.append((node, direction, path_cost, parent))
+
+        """when a goal_location is found, append the connection"""
+        if node in goal_locations:  # for some reason problem.isGoalState(state) doesn't work
+            path_to_goal = getPath(problem, actions_taken)
+            connections_found.append((start_location, node, path_cost, path_to_goal))
+
+        """check if all goal_locations have been found"""
+        if len(goal_locations) == len(connections_found):
+            return connections_found
+
+        """expand from current node"""
+        for child in expand(problem, node, path_cost, explored_nodes):
+            h = heuristic(child[0], problem)
+            frontier.update(child, child[2] + h)
+
+    print("A goal is not reachable, might be a bug...")
+    util.raiseNotDefined()
+
 def uniformCostSearch(problem):
     """Search the node of the smallest total cost first."""
     "*** YOUR CODE HERE ***"
@@ -462,6 +520,33 @@ def uniformCostSearch(problem):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
+
+    ### corners problem ###
+    # uses a slightly modified graphSearch function
+    if hasattr(problem, "iam") and problem.iam == "CornersProblem":
+        all_connections = []  # [(start, end, path_cost, path_to_goal),...]
+        start_connections = []
+
+        """start bfs from every start location separately"""
+        all_locations = problem.startingLocations   # if this is not allowed, you could also form the list of other
+                                                    # starting locations during the first bfs search
+        goal_locations = list.copy(all_locations)
+        for i, start_location in enumerate(all_locations):
+            goal_locations.remove(start_location)  # if A->B is found, dont look for B->A
+            new_connections = weightedGraphSearch_cornersProblem(problem, util.PriorityQueue(), start_location, goal_locations, heuristic)
+            if i == 0:
+                start_connections = new_connections
+            for nc in new_connections:
+                all_connections.append(nc)
+            # print("All connections found ", new_connections)
+            # print(f"connections in total: {len(new_connections)}")
+
+        # print(start_connections)
+        # print(all_connections)
+
+        return findShortestPath(start_connections, all_connections)
+    ### corner problem ends
+
     frontier = util.PriorityQueue()  # First in first out queue
     path = weightedGraphSearch(problem, frontier, heuristic)
     return path

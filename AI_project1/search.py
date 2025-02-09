@@ -74,7 +74,7 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 
-def get_path(problem, actions_taken: []) -> []:
+def getPath(problem, actions_taken: []) -> []:
     path = []
     i = len(actions_taken) - 1
     while i >= 0:  # loop backwards over the list, beginning from the last action
@@ -94,6 +94,7 @@ def get_path(problem, actions_taken: []) -> []:
 
 def expand(problem, node, path_cost, reached):
     """
+    used by graphSearch and weightedGraphSearch
     returns: Generator[child_node, direction, cost, parent_node]
     """
     for successor in problem.getSuccessors(node):
@@ -108,7 +109,7 @@ def graphSearch(problem, frontier) -> []:
     @param problem:
     @param frontier: queue, needs to have functions push(), pop()
     """
-    reached = dict()
+    reached = dict()  # TODO: change this to a set
     actions_taken = []
     frontier.push( (problem.getStartState(), None, 0, None) )  # (node, direction, cost, parent_node)
 
@@ -117,14 +118,14 @@ def graphSearch(problem, frontier) -> []:
         node, direction, path_cost, parent = action
 
         if reached.get(node):
-            continue
+            continue  # if node has been visited
         reached[node] = node
 
         if direction:  # skip first iteration
             actions_taken.append(action)
 
         if problem.isGoalState(node):
-            return get_path(problem, actions_taken)
+            return getPath(problem, actions_taken)
 
         for child in expand(problem, node, path_cost, reached):
             frontier.push(child)
@@ -153,9 +154,259 @@ def depthFirstSearch(problem):
     return path
 
 
+# def getPath_cornersProblem(problem, actions_taken: []):
+#     """
+#     for solving cornersProblem, because the other bfs solution constructs the path in a way that is not
+#     compatible with cornerProblem.
+#     """
+#     path = []
+#     i = len(actions_taken) - 1
+#     while i >= 0:  # loop backwards over the list, beginning from the last action
+#         action = actions_taken[i]  # (this_node, how_we_got_here, cost, parent)
+#         direction = action[1]
+#         parent = action[3]
+#         path.append(direction)
+#
+#         # check previous nodes until we find the parent's action
+#         i = i - 1
+#         while i >= 0 and parent != actions_taken[i][0]:
+#             i = i - 1
+#
+#     path.reverse()
+#     return path
+
+
+# def expand_cornersProblem(problem, node, path_cost, explored_nodes):
+#     """
+#     for solving cornersProblem, because the other bfs solution constructs the path in a way that is not
+#     compatible with cornerProblem.
+#     returns: Generator[child_node, direction_to_child_node]
+#     """
+#     for successor in problem.getSuccessors(node):
+#         # (next_node, direction, cost, parent_node)
+#         if successor[0] not in explored_nodes:
+#
+#             yield successor
+#
+#     for successor in problem.getSuccessors(node):
+#         next_node, direction, action_cost = successor
+#         if next_node not in explored_nodes:
+#             yield next_node, direction, path_cost + action_cost, node
+
+
+def graphSearch_cornersProblem(problem, frontier, start_location, goal_locations):
+    """
+    for solving cornersProblem, actually almost identical with graphSearch...
+    TODO: replace original graphSearch-function with this function
+
+    This function allows for multiple starting locations for the search.
+    @param goal_locations: list of locations being searched
+    @param start_location: start search here
+    @param problem: e.g. cornersProblem
+    @param frontier: queue for bfs, stack for dfs
+    """
+    explored_nodes = set()
+    # set of explored nodes {(a,b), (c,d)... }
+    # value: (neighbour, direction_to_neighbour)
+    actions_taken = []
+
+    # return this
+    connections_found = []  # [(start, goal, path_to_goal), ...]
+
+    actions_taken = []  # [(this_node, how_we_got_here, cost, parent), ...]
+
+    # push starting locations to queue
+    frontier.push( (start_location, None, 0, None) )  # (this_node, how_we_got_here, path_cost, parent)
+
+    """ Begin main loop """
+    while not frontier.isEmpty():
+        """explore next node in queue"""
+        node, direction, path_cost, parent = frontier.pop()  # (this_node, how_we_got_here, cost, parent)
+
+        """if the node has already been explored, continue from the beginning"""
+        if node in explored_nodes:
+            continue
+
+        """if not, add the current node to the set of explored nodes"""
+        explored_nodes = explored_nodes | {node}
+        # print(f"set = {explored_nodes}")
+
+        """keep track of actions taken"""
+        if direction:  # skip first round
+            actions_taken.append((node, direction, path_cost, parent))
+
+        """when a goal_location is found, append the connection"""
+        if node in goal_locations:
+            path_to_goal = getPath(problem, actions_taken)
+            connections_found.append((start_location, node, path_cost, path_to_goal))
+
+        """check if all goal_locations have been found"""
+        if len(goal_locations) == len(connections_found):
+            return connections_found
+
+        """expand from current node"""
+        for child in expand(problem, node, path_cost, explored_nodes):
+            frontier.push(child)
+
+    print("A goal is not reachable, might be a bug...")
+    util.raiseNotDefined()
+
+
+"""Function for recursively finding all tours in a graph. Generated by Copilot, slightly modified by me."""
+def find_all_tours(nodes):
+    """
+    Basically travelling salesman through bruteforce. However, corners problem only has 5 nodes.
+    The amount of possible paths in a complete graph is (n-1)! = (5-1)! = 4*3*2*1 = 24.
+
+    Currently, assumes that the graph is complete, aka all nodes are connected to all other nodes
+    @param nodes: node[0] is the starting node for the tours
+    """
+    start_node = nodes[0]
+    all_tours = []
+
+    # recursive search method
+    def generate_tours(current_node, visited: set, path):
+        if len(visited) == len(nodes):  # recursion end condition
+            if start_node in nodes:
+                all_tours.append(path)
+            return
+
+        for neighbor in nodes:
+            if neighbor not in visited:
+                generate_tours(neighbor, visited | {neighbor}, path + [neighbor])
+
+    # start recursive search
+    generate_tours(start_node, {start_node}, [start_node])
+
+    print(f"found {len(all_tours)} tours")
+    for tour in all_tours:
+        print(tour)
+
+    return all_tours
+
+# # for debugging find_all_tours
+# nodes = ['A', 'B', 'C', 'D']
+# connections = {
+#     'A': ['B', 'C', 'D'],
+#     'B': ['A', 'C', 'D'],
+#     'C': ['A', 'B', 'D'],
+#     'D': ['A', 'B', 'C']
+# }
+# tours = find_all_tours(nodes)
+
+def calculateTourCost(tour: list, connections: list) -> int:
+    # if list of connections becomes very large, replace it with a dict for faster search
+    cost = 0
+    for i in range(len(tour) - 1):
+        start_node, end_node = tour[i], tour[i+1]
+        required_nodes = {start_node, end_node}
+        for c in connections:
+            nodes_in_this_connection = {c[0], c[1]}  # a set with start node and end node
+            if required_nodes == nodes_in_this_connection:
+                cost += c[2]
+                break  # connection found
+    return cost
+
+def reversePath(path):
+    # print(f"reversing path {path}")
+    reverse = {
+        'North': 'South',
+        'South': 'North',
+        'East': 'West',
+        'West': 'East'
+    }
+    reversed_path = []
+    for step in path:
+        reversed_path.append(reverse.get(step))
+    reversed_path.reverse()
+    # print(f"reversed path is {reversed_path}")
+    return reversed_path
+
+def combinePaths(tour, connections):
+    """
+    Some paths need to be reversed.
+    I'm assuming the only directions in use are 'North', 'East', 'South' and 'West'.
+    """
+    combined_path = []
+    for i in range(len(tour) - 1):
+        start_node, end_node = tour[i], tour[i+1]
+        required_nodes = {start_node, end_node}
+        for c in connections:
+            nodes_in_this_connection = {c[0], c[1]}  # a set with start node and end node
+            if required_nodes == nodes_in_this_connection:
+                path = c[3]
+                if start_node == c[1]:  # path needs to be reversed
+                    path = reversePath(path)
+                # print(f"adding path {path}")
+                for step in path:
+                    combined_path.append(step)
+
+    return combined_path
+
+
+def findShortestPath(start_connections, connections):
+    # connection: (start, end, path_cost, path_to_goal)
+    # connections: [connection1, connection2...]
+    nodes = []  # list of nodes [(a,b), (c,d)...]
+    tours = []  # [[node1 ... node_n], [node1 ... node_n-1]...] tour is a path that goes through all nodes once
+    # TODO: if the amount of nodes is large, consider using a dictionary for faster retrieval of elements
+
+    """add all nodes to the nodes list"""
+    nodes.append(start_connections[0][0])
+    for i in range(len(start_connections)):
+        nodes.append(start_connections[i][1])
+    print(f"nodes in the graph: {nodes}")
+
+    """find all tours by brute force"""
+    tours = find_all_tours(nodes)
+
+    """find the shortest tour"""
+    lowest_tour_cost = 9999999999
+    shortest_tour = None
+    for tour in tours:
+        cost = calculateTourCost(tour, connections)
+        if cost < lowest_tour_cost:
+            lowest_tour_cost = cost
+            shortest_tour = tour
+    print(f"Shortest tour is {lowest_tour_cost} steps long: {shortest_tour}")
+
+    """now we can reconstruct the complete path"""
+    path = combinePaths(shortest_tour, connections)
+    print(f"The shortest path is: {path}")
+    return path
+
+    util.raiseNotDefined()
+    return []
+
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
+
+    ### corners problem ###
+    # uses a slightly modified graphSearch function
+    if hasattr(problem, "iam") and problem.iam == "CornersProblem":
+        all_connections = []  # [(start, end, path_cost, path_to_goal),...]
+        start_connections = []
+
+        """start bfs from every start location separately"""
+        all_locations = problem.getStartState()
+        goal_locations = list.copy(all_locations)
+        for i, start_location in enumerate(all_locations):
+            goal_locations.remove(start_location)  # if A->B is found, dont look for B->A
+            new_connections = graphSearch_cornersProblem(problem, util.Queue(), start_location, goal_locations)
+            if i == 0:
+                start_connections = new_connections
+            for nc in new_connections:
+                all_connections.append(nc)
+            # print("All connections found ", new_connections)
+            # print(f"connections in total: {len(new_connections)}")
+
+        # print(start_connections)
+        # print(all_connections)
+
+        return findShortestPath(start_connections, all_connections)
+    ### corners problem section ends ###
+
 
     frontier = util.Queue()  # First in first out queue
     path = graphSearch(problem, frontier)
@@ -172,7 +423,7 @@ def nullHeuristic(state, problem=None):
 
 def weightedGraphSearch(problem, frontier, heuristic=nullHeuristic) -> []:
     """
-    used by ucs
+    used by ucs, astar
     @param problem:
     @param frontier: queue, needs to have functions push(), pop(), update()
     """
@@ -192,7 +443,7 @@ def weightedGraphSearch(problem, frontier, heuristic=nullHeuristic) -> []:
             actions_taken.append(action)
 
         if problem.isGoalState(node):
-            return get_path(problem, actions_taken)
+            return getPath(problem, actions_taken)
 
         for child in expand(problem, node, path_cost, reached):
             frontier.update(child, child[2] + heuristic(child[0], problem))

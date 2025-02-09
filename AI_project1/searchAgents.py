@@ -288,6 +288,38 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+        """
+        Tehtävänannosta:
+        
+        "Hint: The only parts of the game state you need to reference in your implementation are the starting Pacman
+        position and the location of the four corners."
+        """
+
+        self.iam = "CornersProblem"  # so that I can use another implementation of BFS
+
+        """
+        Suunnitelma:
+        1. Leveyshaku alkaen pacmanista ja jokaisesta nurkasta.
+        2. Jatketaan hakua, kunnes löydetään polku jokaisen aloituspisteen välillä.
+        3. Poluista muodostuu painotettu verkko.
+        4. Etsitään painotetusta verkosta lyhyin polku.
+        
+        Tehtävänannosta:
+        "You need to define an abstract state representation that does not encode irrelevant information."
+        
+        Suunnitelman vaatimat tiedot:
+        self.startingLocations -> startState
+        self.maxConnections -> goalState
+        """
+
+        self.startingLocations = list((self.startingPosition,) + self.corners)
+
+        # maxConnection for a directed graph
+        # self.maxConnections = len(self.startingLocations) * (len(self.startingLocations) - 1)
+
+        # maxConnections for a non-directed graph
+        # for i in range(len(self.startingLocations)):
+        #     self.maxConnections += i
 
     def getStartState(self):
         """
@@ -295,14 +327,16 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.startingLocations
 
-    def isGoalState(self, state):
+    def isGoalState(self, state: int):
         """
         Returns whether this search state is a goal state of the problem.
+        @return: connections found == maxConnections
+        @param state: connections found
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return state == self.maxConnections
 
     def getSuccessors(self, state):
         """
@@ -325,6 +359,12 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            stepCost = 1
+            x,y = state
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:   # If next tile is not a wall
+                successors.append( ((nextx, nexty), action, stepCost) )
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -360,6 +400,10 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
+
+    """deprioritize paths through the middle, prioritize edges"""
+
+
     return 0 # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):

@@ -310,7 +310,6 @@ class CornersProblem(search.SearchProblem):
         
         Suunnitelman vaatimat tiedot:
         self.startingLocations -> startState
-        self.maxConnections -> goalState
         """
 
         self.startingLocations = list((self.startingPosition,) + self.corners)
@@ -319,9 +318,9 @@ class CornersProblem(search.SearchProblem):
         # self.maxConnections = len(self.startingLocations) * (len(self.startingLocations) - 1)
 
         # maxConnections for a non-directed graph, in total 10
-        self.maxConnections = 0
-        for i in range(len(self.startingLocations)):
-            self.maxConnections += i
+        # self.maxConnections = 0
+        # for i in range(len(self.startingLocations)):
+        #     self.maxConnections += i
 
     def getStartState(self):
         """

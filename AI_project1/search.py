@@ -154,46 +154,6 @@ def depthFirstSearch(problem):
     return path
 
 
-# def getPath_cornersProblem(problem, actions_taken: []):
-#     """
-#     for solving cornersProblem, because the other bfs solution constructs the path in a way that is not
-#     compatible with cornerProblem.
-#     """
-#     path = []
-#     i = len(actions_taken) - 1
-#     while i >= 0:  # loop backwards over the list, beginning from the last action
-#         action = actions_taken[i]  # (this_node, how_we_got_here, cost, parent)
-#         direction = action[1]
-#         parent = action[3]
-#         path.append(direction)
-#
-#         # check previous nodes until we find the parent's action
-#         i = i - 1
-#         while i >= 0 and parent != actions_taken[i][0]:
-#             i = i - 1
-#
-#     path.reverse()
-#     return path
-
-
-# def expand_cornersProblem(problem, node, path_cost, explored_nodes):
-#     """
-#     for solving cornersProblem, because the other bfs solution constructs the path in a way that is not
-#     compatible with cornerProblem.
-#     returns: Generator[child_node, direction_to_child_node]
-#     """
-#     for successor in problem.getSuccessors(node):
-#         # (next_node, direction, cost, parent_node)
-#         if successor[0] not in explored_nodes:
-#
-#             yield successor
-#
-#     for successor in problem.getSuccessors(node):
-#         next_node, direction, action_cost = successor
-#         if next_node not in explored_nodes:
-#             yield next_node, direction, path_cost + action_cost, node
-
-
 def graphSearch_cornersProblem(problem, frontier, start_location, goal_locations):
     """
     for solving cornersProblem, actually almost identical with graphSearch...
@@ -278,9 +238,9 @@ def findAllTours(nodes):
     # start recursive search
     generate_tours(start_node, {start_node}, [start_node])
 
-    print(f"found {len(all_tours)} tours")
-    for tour in all_tours:
-        print(tour)
+    # print(f"found {len(all_tours)} tours")
+    # for tour in all_tours:
+        # print(tour)
 
     return all_tours
 
@@ -355,7 +315,7 @@ def findShortestPath(start_connections, connections):
     nodes.append(start_connections[0][0])
     for i in range(len(start_connections)):
         nodes.append(start_connections[i][1])
-    print(f"nodes in the graph: {nodes}")
+    # print(f"nodes in the graph: {nodes}")
 
     # find all tours by brute force
     tours = findAllTours(nodes)
@@ -368,11 +328,11 @@ def findShortestPath(start_connections, connections):
         if cost < lowest_tour_cost:
             lowest_tour_cost = cost
             shortest_tour = tour
-    print(f"Shortest tour is {lowest_tour_cost} steps long: {shortest_tour}")
+    # print(f"Shortest tour is {lowest_tour_cost} steps long: {shortest_tour}")
 
     # now we can reconstruct the complete path
     path = combinePaths(shortest_tour, connections)
-    print(f"The shortest path is: {path}")
+    # print(f"The shortest path is: {path}")
     return path
 
 
@@ -398,10 +358,8 @@ def breadthFirstSearch(problem):
                 all_connections.append(nc)
             # print("All connections found ", new_connections)
             # print(f"connections in total: {len(new_connections)}")
-
         # print(start_connections)
         # print(all_connections)
-
         return findShortestPath(start_connections, all_connections)
     ### corners problem section ends ###
 

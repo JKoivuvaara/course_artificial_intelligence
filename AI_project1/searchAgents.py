@@ -301,8 +301,9 @@ class CornersProblem(search.SearchProblem):
         Suunnitelma:
         1. Leveyshaku alkaen pacmanista ja jokaisesta nurkasta.
         2. Jatketaan hakua, kunnes löydetään polku jokaisen aloituspisteen välillä.
-        3. Poluista muodostuu painotettu verkko.
-        4. Etsitään painotetusta verkosta lyhyin polku.
+        4. Polkuja tarvitsee löytää vain (4*3*2*1)/2 = 10
+        5. Poluista muodostuu painotettu verkko.
+        6. Etsitään painotetusta verkosta lyhyin kierros.
         
         Tehtävänannosta:
         "You need to define an abstract state representation that does not encode irrelevant information."
@@ -317,7 +318,7 @@ class CornersProblem(search.SearchProblem):
         # maxConnection for a directed graph
         # self.maxConnections = len(self.startingLocations) * (len(self.startingLocations) - 1)
 
-        # maxConnections for a non-directed graph
+        # maxConnections for a non-directed graph, in total 10
         self.maxConnections = 0
         for i in range(len(self.startingLocations)):
             self.maxConnections += i
@@ -409,9 +410,8 @@ def cornersHeuristic(state, problem):
     """
 
     lowest_distance = 99999
-    s_x, s_y = state
     for corner in corners:
-        distance_to_corner = ((s_x - corner[0]) ** 2 + (s_y - corner[1]) ** 2) ** 0.5
+        distance_to_corner = ((state[0] - corner[0]) ** 2 + (state[1] - corner[1]) ** 2) ** 0.5
         if distance_to_corner < lowest_distance:
             lowest_distance = distance_to_corner
 
@@ -510,7 +510,48 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    h = 999999
+
+    """heuristic = distance between current state and closest food tile"""
+    lowest_distance = h
+    closest_food = None
+    for food in foodGrid.asList():
+        distance_to_food = ((state[0][0] - food[0]) ** 2 + (state[0][1] - food[1]) ** 2) ** 0.5
+        if distance_to_food < lowest_distance:
+            lowest_distance = distance_to_food
+            closest_food = food
+    h = lowest_distance
+
+
+    # """heuristic 2 = amount of adjacent walls OR tile contains food"""
+    # # results for this are not good
+    # # logic here is that 3 walls -> dead-end, 2 walls -> probably a tunnel to a new area,
+    # # 1/0 walls -> open space with nothing
+    # # amount of walls w: food > 2w > 1w > 0w > 3w > 4w
+    # wall_locations = problem.walls
+    # wall_cost = {
+    #     1: 2/5,
+    #     2: 1/5,
+    #     0: 3/5,
+    #     3: 4/5,
+    #     4: 1
+    #     }
+    # adjacent_tiles = [(1, 0), (1, 0), (-1, 0), (0, -1)]
+    # wall_count = 0
+    # for tile in adjacent_tiles:
+    #     x, y = tile
+    #     if wall_locations[y][x]:
+    #         wall_count += 1
+    # h = wall_cost.get(wall_count)
+    # y_position, x_position = position
+    # if foodGrid[y_position][x_position]:
+    #     h = 0
+
+
+    if h == 999999:
+        h = 0
+
+    return h
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -541,6 +582,8 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
+        path = search.breadthFirstSearch(problem)
+        return path
         util.raiseNotDefined()
 
 class AnyFoodSearchProblem(PositionSearchProblem):
@@ -577,6 +620,9 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
+        if state in self.food.asList():
+            return True
+        return False
         util.raiseNotDefined()
 
 def mazeDistance(point1, point2, gameState):

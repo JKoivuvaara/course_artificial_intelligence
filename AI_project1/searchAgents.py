@@ -552,35 +552,42 @@ def foodHeuristic(state, problem):
     # h = furthest_distance
 
     """heuristic 4 = Manhattan distance between current state and furthest food tile"""
-    # # result: 3/4 points
-    # h = 0
-    # furthest_distance = h
-    # furthest_food = None
-    # for food in foodGrid.asList():
-    #     distance_to_food = abs(state[0][0] - food[0]) + abs(state[0][1] - food[1])
-    #     if distance_to_food > furthest_distance:
-    #         furthest_distance = distance_to_food
-    #         furthest_food = food
-    # h = furthest_distance
-
-    """heuristic 5 = path distance between current state and closest (manhattan distance) food tile"""
-    # result: 4/4 points, euclidian distance gives the same result
-    closest_distance = 999999
-    closest_food = None
+    """
+    Note: technically the next two heuristics get better grades from the autograder, but I don't think they
+    are admissible and they also take longer to run.
+    """
+    # result: 3/4 points
+    h = 0
+    furthest_distance = h
+    furthest_food = None
     for food in foodGrid.asList():
         distance_to_food = abs(state[0][0] - food[0]) + abs(state[0][1] - food[1])
-        if distance_to_food < closest_distance:
-            closest_distance = distance_to_food
-            closest_food = food
-    if closest_food is None:
-        h = 0
-    else:
-        h = mazeDistance(position, closest_food, problem.startingGameState)
+        if distance_to_food > furthest_distance:
+            furthest_distance = distance_to_food
+            furthest_food = food
+    h = furthest_distance
+
+    """heuristic 5 = path distance between current state and closest (manhattan distance) food tile"""
+    """
+    I don't think this is an admissible heuristic, as mazeDistance calculates the true path cost to the closest food
+    """
+    # # result: 4/4 points
+    # closest_distance = 999999
+    # closest_food = None
+    # for food in foodGrid.asList():
+    #     distance_to_food = abs(state[0][0] - food[0]) + abs(state[0][1] - food[1])
+    #     if distance_to_food < closest_distance:
+    #         closest_distance = distance_to_food
+    #         closest_food = food
+    # if closest_food is None:
+    #     h = 0
+    # else:
+    #     h = mazeDistance(position, closest_food, problem.startingGameState)
 
     """heuristic 6 = calculate every path distance and choose the biggest one"""
     """
     This gives 5/4 points from the autograder, but I think it might be calculating the true completion cost.
-    This also takes significantly longer to compute than heuristic 5. 
+    This also takes significantly longer to compute than any other heuristic, so it is in reality kinda useless.
     h6 takes 6s and h5 only 1s on my computer
     """
     # h = 0

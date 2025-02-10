@@ -510,46 +510,85 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    h = 999999
 
-    """heuristic = distance between current state and closest food tile"""
-    lowest_distance = h
-    closest_food = None
-    for food in foodGrid.asList():
-        distance_to_food = ((state[0][0] - food[0]) ** 2 + (state[0][1] - food[1]) ** 2) ** 0.5
-        if distance_to_food < lowest_distance:
-            lowest_distance = distance_to_food
-            closest_food = food
-    h = lowest_distance
+    """heuristic 1 = Euclidean distance between current state and closest food tile"""
+    # h = 999999
+    # result: 2/4 points
+    # lowest_distance = h
+    # closest_food = None
+    # for food in foodGrid.asList():
+    #     distance_to_food = ((state[0][0] - food[0]) ** 2 + (state[0][1] - food[1]) ** 2) ** 0.5
+    #     if distance_to_food < lowest_distance:
+    #         lowest_distance = distance_to_food
+    #         closest_food = food
+    # h = lowest_distance
+    # if h == 999999:
+    #     h = 0
 
-
-    # """heuristic 2 = amount of adjacent walls OR tile contains food"""
-    # # results for this are not good
-    # # logic here is that 3 walls -> dead-end, 2 walls -> probably a tunnel to a new area,
-    # # 1/0 walls -> open space with nothing
-    # # amount of walls w: food > 2w > 1w > 0w > 3w > 4w
-    # wall_locations = problem.walls
-    # wall_cost = {
-    #     1: 2/5,
-    #     2: 1/5,
-    #     0: 3/5,
-    #     3: 4/5,
-    #     4: 1
-    #     }
-    # adjacent_tiles = [(1, 0), (1, 0), (-1, 0), (0, -1)]
-    # wall_count = 0
-    # for tile in adjacent_tiles:
-    #     x, y = tile
-    #     if wall_locations[y][x]:
-    #         wall_count += 1
-    # h = wall_cost.get(wall_count)
-    # y_position, x_position = position
-    # if foodGrid[y_position][x_position]:
+    """heuristic 2 = Manhattan distance between current state and closest food tile"""
+    # # result: 2/4 points
+    # h = 999999
+    # lowest_distance = h
+    # closest_food = None
+    # for food in foodGrid.asList():
+    #     distance_to_food = abs(state[0][0] - food[0]) + abs(state[0][1] - food[1])
+    #     if distance_to_food < lowest_distance:
+    #         lowest_distance = distance_to_food
+    #         closest_food = food
+    # h = lowest_distance
+    # if h == 999999:
     #     h = 0
 
 
-    if h == 999999:
+    """heuristic 3 = Euclidean distance between current state and furthest food tile"""
+    # # result: 3/4 points
+    # h = 0
+    # furthest_distance = h
+    # furthest_food = None
+    # for food in foodGrid.asList():
+    #     distance_to_food = ((state[0][0] - food[0]) ** 2 + (state[0][1] - food[1]) ** 2) ** 0.5
+    #     if distance_to_food > furthest_distance:
+    #         furthest_distance = distance_to_food
+    #         furthest_food = food
+    # h = furthest_distance
+
+    """heuristic 4 = Manhattan distance between current state and furthest food tile"""
+    # # result: 3/4 points
+    # h = 0
+    # furthest_distance = h
+    # furthest_food = None
+    # for food in foodGrid.asList():
+    #     distance_to_food = abs(state[0][0] - food[0]) + abs(state[0][1] - food[1])
+    #     if distance_to_food > furthest_distance:
+    #         furthest_distance = distance_to_food
+    #         furthest_food = food
+    # h = furthest_distance
+
+    """heuristic 5 = path distance between current state and closest (manhattan distance) food tile"""
+    # result: 4/4 points, euclidian distance gives the same result
+    closest_distance = 999999
+    closest_food = None
+    for food in foodGrid.asList():
+        distance_to_food = abs(state[0][0] - food[0]) + abs(state[0][1] - food[1])
+        if distance_to_food < closest_distance:
+            closest_distance = distance_to_food
+            closest_food = food
+    if closest_food is None:
         h = 0
+    else:
+        h = mazeDistance(position, closest_food, problem.startingGameState)
+
+    """heuristic 6 = calculate every path distance and choose the biggest one"""
+    """
+    This gives 5/4 points from the autograder, but I think it might be calculating the true completion cost.
+    This also takes significantly longer to compute than heuristic 5. 
+    h6 takes 6s and h5 only 1s on my computer
+    """
+    # h = 0
+    # for food in foodGrid.asList():
+    #     distance_to_food = mazeDistance(position, food, problem.startingGameState)
+    #     if distance_to_food > h:
+    #         h = distance_to_food
 
     return h
 
